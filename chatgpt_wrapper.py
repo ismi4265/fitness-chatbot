@@ -11,12 +11,15 @@ class ChatGPT:
         self.model = model
 
     def chat(self, user_input):
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=[{"role": "user", "content": user_input}],
-            api_key=OPENAI_API_KEY
-        )
-        return response["choices"][0]["message"]["content"].strip()
+        try:
+            response = openai.ChatCompletion.create(
+                model=self.model,
+                messages=[{"role": "user", "content": user_input}],
+                api_key=OPENAI_API_KEY
+            )
+            return response["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            return f"Error: {str(e)}"
 
 # Test the chatbot
 if __name__ == "__main__":

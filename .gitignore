@@ -1,2 +1,16 @@
 # Ignore environment variables
 .env
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore virtual environment
+venv/
+pip install -r requirements.txt
