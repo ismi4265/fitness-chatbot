@@ -36,3 +36,33 @@ def generate_fitness_prompt(user_goal, experience_level, dietary_preference):
     """
 
     return prompt
+
+from utils.workout_categorizer import categorize_workout
+
+def adjust_workout_based_on_feedback(goal, feedback_list):
+    """
+    Adjusts workouts based on user feedback.
+
+    :param goal: str - User's fitness goal (weight loss, muscle gain, maintenance)
+    :param feedback_list: list of dict - Recent user feedback
+    :return: dict - Adjusted workout plan
+    """
+
+    workouts = categorize_workout(goal)
+
+    for feedback in feedback_list:
+        workout_name = feedback.workout_name
+        user_feedback = feedback.feedback
+
+        for category in ["primary", "secondary"]:
+            for workout in workouts[category]:
+                if workout["name"] == workout_name:
+                    if user_feedback == "too easy":
+                        if "reps" in workout:
+                            workout["reps"] = str(int(workout["reps"].split("-")[0]) + 2) + "-" + str(int(workout["reps"].split("-")[1]) + 2)
+                    elif user_feedback == "too hard":
+                        if "reps" in workout:
+                            workout["reps"] = str(max(1, int(workout["reps"].split("-")[0]) - 2)) + "-" + str(max(1, int(workout["reps"].split("-")[1]) - 2))
+
+    return workouts
+

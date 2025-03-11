@@ -36,3 +36,17 @@ class UserSession(db.Model):
 
     # Relationship to user
     user = db.relationship("User", backref=db.backref("sessions", lazy=True))
+
+class WorkoutProgress(db.Model):
+    __tablename__ = "workout_progress"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    workout_name = db.Column(db.String(100), nullable=False)
+    feedback = db.Column(db.String(255), nullable=True)  # e.g., "too easy", "too hard", "just right"
+    sets_completed = db.Column(db.Integer, nullable=True)  # How many sets completed?
+    reps_completed = db.Column(db.Integer, nullable=True)  # How many reps per set?
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    # Relationship to user
+    user = db.relationship("User", backref=db.backref("workout_progress", lazy=True))
