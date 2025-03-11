@@ -25,3 +25,14 @@ class FitnessProfile(db.Model):
 
     # Relationship to user
     user = db.relationship("User", backref=db.backref("fitness_profiles", lazy=True))
+
+class UserSession(db.Model):
+    __tablename__ = "user_sessions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    session_data = db.Column(db.Text, nullable=True)  # Stores serialized session data
+    last_updated = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+    # Relationship to user
+    user = db.relationship("User", backref=db.backref("sessions", lazy=True))

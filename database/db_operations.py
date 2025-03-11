@@ -1,4 +1,4 @@
-from database.models import db, User, FitnessProfile
+from database.models import db, User, FitnessProfile, UserSession
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def create_user(username, email, password):
@@ -29,3 +29,29 @@ def save_fitness_profile(user_id, goal, experience_level, dietary_preference, pl
 def get_fitness_plans_by_user(user_id):
     """Retrieve all fitness plans for a user."""
     return FitnessProfile.query.filter_by(user_id=user_id).all()
+
+def save_session(user_id, session_data):
+    """Saves or updates user session memory."""
+    session = UserSession.query.filter_by(user_id=user_id).first()
+
+    if session:
+        session.session_data = session_data
+    else:
+        session = UserSession(user_id=user_id, session_data=session_data)
+        db.session.add(session)
+
+    db.session.commit()
+    return session
+
+def get_session(user_id):
+    """Retrieves stored session memory for a user."""
+    session = UserSession.query.filter_by(user_id=user_id).first()
+    return session.session_data if session else None
+
+def clear_session(user_id):
+    """Clears session memory for a user."""
+    session = UserSession.query.filter_by(user_id=user_id).first()
+    if session:
+        db.session.delete(session)
+        db.session.commit()
+    return True
