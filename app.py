@@ -3,18 +3,20 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import os
+from datetime import datetime
 
 # Import database models and operations
-from database.models import db, User, FitnessProfile, UserSession
+from database.models import db
 import database.db_operations as db_ops
+from database.db_operations import (
+    save_meal_plan, get_recent_meal_plan, save_session, get_session, clear_session,
+    save_workout_feedback, get_recent_feedback, save_food_item, log_food, get_food_log, get_daily_food_log
+)
 
 # Import AI and utilities
 from chatgpt_wrapper import ChatGPT
 from user_input_handler import generate_fitness_prompt, adjust_workout_based_on_feedback
-from database.db_operations import (
-    save_session, get_session, clear_session,
-    save_workout_feedback, get_recent_feedback
-)
+from utils.meal_planner import generate_meal_plan
 
 app = Flask(__name__)
 
@@ -64,7 +66,6 @@ def fitness_plan():
     data = request.json
     user_id = data.get("user_id")
 
-    # Check if response is cached
     session_memory = get_session(user_id)
     if session_memory:
         return jsonify({"message": "Cached response", "fitness_plan": session_memory})
@@ -80,24 +81,9 @@ def fitness_plan():
     
     response = chatbot.chat(prompt)
 
-    # Save response to avoid multiple calls
     save_session(user_id, response)
 
     return jsonify({"message": "Fitness plan saved successfully", "fitness_plan": response})
-
-### ------------------------ SESSION MEMORY ROUTES ------------------------ ###
-@app.route("/get_session/<int:user_id>", methods=["GET"])
-def retrieve_session(user_id):
-    """Fetch stored session memory for a user."""
-    session_memory = db_ops.get_session(user_id)
-    return jsonify({"session_memory": session_memory})
-
-
-@app.route("/clear_session/<int:user_id>", methods=["DELETE"])
-def clear_user_session(user_id):
-    """Clears session memory for a user."""
-    clear_session(user_id)
-    return jsonify({"message": "Session cleared successfully"})
 
 ### ------------------------ WORKOUT FEEDBACK ROUTES ------------------------ ###
 @app.route("/submit_feedback", methods=["POST"])
@@ -106,7 +92,7 @@ def submit_feedback():
     data = request.json
     user_id = data.get("user_id")
     workout_name = data.get("workout_name")
-    feedback = data.get("feedback")  # "too easy", "too hard", "just right"
+    feedback = data.get("feedback")
     sets_completed = data.get("sets_completed")
     reps_completed = data.get("reps_completed")
 
@@ -117,13 +103,99 @@ def submit_feedback():
 
     return jsonify({"message": "Feedback saved successfully!"})
 
-@app.route("/get_adjusted_workout/<int:user_id>/<goal>", methods=["GET"])
-def get_adjusted_workout(user_id, goal):
-    """Fetches user feedback and adjusts the workout plan dynamically."""
-    feedback_list = get_recent_feedback(user_id)
-    adjusted_workouts = adjust_workout_based_on_feedback(goal, feedback_list)
+### ------------------------ MEAL PLAN ROUTES ------------------------ ###
+@app.route("/generate_meal_plan", methods=["POST"])
+def generate_meal():
+    """Generates a meal plan based on user fitness goals."""
+    data = request.json
+    user_id = data.get("user_id")
+    goal = data.get("goal").lower()
 
-    return jsonify({"adjusted_workout": adjusted_workouts})
+    if not user_id or not goal:
+        return jsonify({"error": "User ID and goal are required"}), 400
+
+    meal_plan_json = generate_meal_plan(goal)
+
+    meal_plan = save_meal_plan(
+        user_id=user_id,
+        goal=goal,
+        calories=2200 if goal == "muscle gain" else 1800 if goal == "weight loss" else 2000,
+        protein=40, carbs=40, fats=20,
+        meal_plan_json=meal_plan_json
+    )
+
+    return jsonify({"message": "Meal plan saved successfully!", "meal_plan": meal_plan_json})
+
+@app.route("/get_meal_plan/<int:user_id>", methods=["GET"])
+def get_meal_plan(user_id):
+    """Fetches the most recent meal plan for a user."""
+    meal_plan = get_recent_meal_plan(user_id)
+    
+    if not meal_plan:
+        return jsonify({"error": "No meal plan found"}), 404
+
+    return jsonify({"meal_plan": meal_plan.meal_plan_json})
+
+### ------------------------ FOOD TRACKING ROUTES ------------------------ ###
+@app.route("/log_food", methods=["POST"])
+def log_food_entry():
+    """Logs food intake for a user."""
+    data = request.json
+    user_id = data.get("user_id")
+    food_name = data.get("food_name")
+    calories = data.get("calories")
+    protein = data.get("protein")
+    carbs = data.get("carbs")
+    fats = data.get("fats")
+
+    if not user_id or not food_name or calories is None or protein is None or carbs is None or fats is None:
+        return jsonify({"error": "All fields are required"}), 400
+
+    food_entry = log_food(user_id, food_name, calories, protein, carbs, fats)
+    
+    return jsonify({"message": "Food logged successfully!", "food_log_id": food_entry.id})
+
+@app.route("/get_food_log/<int:user_id>", methods=["GET"])
+def get_food_log_route(user_id):
+    """Fetches a user's food log."""
+    food_entries = get_food_log(user_id)
+
+    if not food_entries:
+        return jsonify({"error": "No food entries found"}), 404
+
+    return jsonify({"food_log": [
+        {
+            "food_name": entry.food_name,
+            "calories": entry.calories,
+            "protein": entry.protein,
+            "carbs": entry.carbs,
+            "fats": entry.fats,
+            "created_at": entry.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        for entry in food_entries
+    ]})
+
+@app.route("/get_food_log_by_date/<int:user_id>/<string:date>", methods=["GET"])
+def get_food_log_by_date(user_id, date):
+    """Fetch user's daily food log."""
+    try:
+        date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+    log_data = get_daily_food_log(user_id, date_obj)
+    return jsonify(log_data)
+
+### ------------------------ FITNESS PLAN ADJUSTMENT ROUTES ------------------------ ###
+@app.route("/get_adjusted_fitness_plan/<int:user_id>", methods=["GET"])
+def get_adjusted_fitness_plan(user_id):
+    """Dynamically adjusts fitness plan based on meal tracking data."""
+    adjustments = db_ops.adjust_fitness_plan_based_on_nutrition(user_id)
+
+    if not adjustments:
+        return jsonify({"error": "No fitness profile or meal data found"}), 404
+
+    return jsonify({"message": "Fitness plan adjustments based on nutrition data", "adjustments": adjustments})
 
 ### ------------------------ START FLASK SERVER ------------------------ ###
 if __name__ == "__main__":

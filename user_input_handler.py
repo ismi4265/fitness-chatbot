@@ -66,3 +66,18 @@ def adjust_workout_based_on_feedback(goal, feedback_list):
 
     return workouts
 
+def generate_fitness_adjustments(goal, nutrient_data):
+    """Generates a ChatGPT-friendly message summarizing needed nutrition adjustments."""
+    return f"""
+    Based on the user's logged meals, their average daily intake is:
+    - Calories: {nutrient_data['avg_calories']} kcal
+    - Protein: {nutrient_data['avg_protein']}g
+    - Carbs: {nutrient_data['avg_carbs']}g
+    - Fats: {nutrient_data['avg_fats']}g
+
+    Their target intake for {goal} should be adjusted as follows:
+    - Adjust Calories by {nutrient_data['calories']} kcal
+    - Adjust Protein by {nutrient_data['protein']}g
+    - Adjust Carbs by {nutrient_data['carbs']}g
+    - Adjust Fats by {nutrient_data['fats']}g
+    """

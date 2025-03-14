@@ -25,3 +25,20 @@ class ChatGPT:
             return response.choices[0].message.content.strip()
         except Exception as e:
             return f"Error: {str(e)}"
+
+    def chat_with_fitness_adjustments(user_id, goal):
+        """Chats with AI to generate fitness adjustments based on meal tracking data."""
+        nutrient_data = adjust_fitness_plan_based_on_nutrition(user_id)
+
+        if not nutrient_data:
+            return "No fitness profile or meal data found."
+
+        prompt = f"""
+        The user is following a fitness plan for {goal}.
+        Based on their food logs, here are their nutritional trends and needed adjustments:
+        {generate_fitness_adjustments(goal, nutrient_data)}
+        
+        Suggest exercise modifications to help them balance their energy and macronutrient intake.
+        """
+
+        return chatbot.chat(prompt)
