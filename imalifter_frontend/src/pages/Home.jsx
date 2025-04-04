@@ -1,10 +1,17 @@
-import styles from "../styles/App.module.css";
+// src/pages/Home.jsx
+import FitnessGoalForm from "../components/FitnessGoalForm";
+import WorkoutLogForm from "../components/WorkoutLogForm";
+import MealPreferenceForm from "../components/MealPreferenceForm";
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <h1>Welcome to IMALIFTER</h1>
-      <p>This is the home page.</p>
+    <div style={{ padding: "2rem" }}>
+      <h1>IMALIFTER Dashboard</h1>
+      <FitnessGoalForm />
+      <hr />
+      <WorkoutLogForm />
+      <hr />
+      <MealPreferenceForm />
     </div>
   );
 }
