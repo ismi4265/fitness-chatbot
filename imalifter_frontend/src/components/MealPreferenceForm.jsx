@@ -1,37 +1,83 @@
-// src/components/MealPreferenceForm.jsx
 import { useState } from "react";
+import styles from "../styles/Theme.module.css";
 
 export default function MealPreferenceForm() {
-  const [mealData, setMealData] = useState({
-    preference: "",
-    allergies: "",
+  const [preferences, setPreferences] = useState({
+    dietaryRestrictions: "",
+    favoriteCuisines: "",
+    dislikedFoods: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
 
-  const handleChange = (e) =>
-    setMealData({ ...mealData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setPreferences({ ...preferences, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Meal preferences submitted:", mealData);
-    // You'd POST to the backend here
+    setLoading(true);
+    setSuccess("");
+    setError("");
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/meal_preferences", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(preferences),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit meal preferences");
+      }
+
+      setSuccess("Meal preferences submitted successfully!");
+      setPreferences({
+        dietaryRestrictions: "",
+        favoriteCuisines: "",
+        dislikedFoods: "",
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Meal Preferences</h2>
-      <input
-        name="preference"
-        placeholder="Diet (e.g. vegan, paleo)"
-        value={mealData.preference}
-        onChange={handleChange}
-      />
-      <input
-        name="allergies"
-        placeholder="Allergies (comma separated)"
-        value={mealData.allergies}
-        onChange={handleChange}
-      />
-      <button type="submit">Save Preferences</button>
-    </form>
+    <div className={styles.pageWrapper}>
+      <h2 className={styles.primaryText}>Meal Preferences</h2>
+      <form onSubmit={handleSubmit} className={styles.formWrapper}>
+        <textarea
+          name="dietaryRestrictions"
+          placeholder="Dietary Restrictions"
+          value={preferences.dietaryRestrictions}
+          onChange={handleChange}
+          required
+        />
+        <textarea
+          name="favoriteCuisines"
+          placeholder="Favorite Cuisines"
+          value={preferences.favoriteCuisines}
+          onChange={handleChange}
+          required
+        />
+        <textarea
+          name="dislikedFoods"
+          placeholder="Disliked Foods"
+          value={preferences.dislikedFoods}
+          onChange={handleChange}
+          required
+        />
+        <button type="submit" className={styles.buttonPrimary}>
+          {loading ? "Submitting..." : "Submit Preferences"}
+        </button>
+      </form>
+      {success && <p className={styles.success}>{success}</p>}
+      {error && <p className={styles.error}>{error}</p>}
+    </div>
   );
 }
