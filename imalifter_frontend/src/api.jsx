@@ -1,7 +1,6 @@
-// src/api.js
-import axios from "axios";
+import axios from 'axios';
 
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = 'http://127.0.0.1:5000';
 
 export async function registerUser(username, email, password) {
   const res = await axios.post(`${API_BASE}/register`, { username, email, password });
