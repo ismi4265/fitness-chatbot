@@ -1,20 +1,36 @@
 import { useState } from "react";
 import styles from "../styles/Theme.module.css";
 
+/**
+ * MealPreferenceForm Component
+ *
+ * Allows users to input their dietary restrictions, favorite cuisines, and disliked foods.
+ * On submission, it sends this data to the backend endpoint `/meal_preferences` using a POST request.
+ * Includes loading indicators, and success/error messages for better user experience.
+ */
 export default function MealPreferenceForm() {
   const [preferences, setPreferences] = useState({
     dietaryRestrictions: "",
     favoriteCuisines: "",
     dislikedFoods: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  /**
+   * Handles input changes and updates state.
+   * @param {React.ChangeEvent<HTMLTextAreaElement>} e
+   */
   const handleChange = (e) => {
     setPreferences({ ...preferences, [e.target.name]: e.target.value });
   };
 
+  /**
+   * Submits meal preferences to backend and handles loading/success/error feedback.
+   * @param {React.FormEvent<HTMLFormElement>} e
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);

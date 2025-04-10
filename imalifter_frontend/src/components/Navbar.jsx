@@ -3,10 +3,21 @@ import { NavLink, useNavigate } from "react-router-dom";
 import styles from "../styles/Navbar.module.css";
 import { useAuth } from "../context/AuthContext";
 
+/**
+ * Navbar component
+ *
+ * Displays navigation links to various parts of the app.
+ * - Shows Home and Register links when no user is logged in.
+ * - Shows Dashboard, Log Workout, Log Nutrition, Profile, and Logout links when user is authenticated.
+ * - Uses dynamic styling via `isActive` to highlight the current active route.
+ */
 export default function Navbar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth(); // Get current user and logout method from context
+  const navigate = useNavigate(); // React Router's hook to programmatically navigate
 
+  /**
+   * Handles logout and navigates to home page.
+   */
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -14,6 +25,7 @@ export default function Navbar() {
 
   return (
     <nav className={styles.navbar}>
+      {/* Home link is always visible */}
       <NavLink
         to="/"
         className={({ isActive }) =>
@@ -23,6 +35,7 @@ export default function Navbar() {
         Home
       </NavLink>
 
+      {/* Register is visible only if user is not logged in */}
       {!user && (
         <NavLink
           to="/register"
@@ -34,6 +47,7 @@ export default function Navbar() {
         </NavLink>
       )}
 
+      {/* The following links are only visible when user is logged in */}
       {user && (
         <>
           <NavLink
@@ -72,6 +86,7 @@ export default function Navbar() {
             Profile
           </NavLink>
 
+          {/* Logout is a button styled like a link */}
           <button onClick={handleLogout} className={styles.logoutButton}>
             Logout
           </button>
