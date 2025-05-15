@@ -19,8 +19,8 @@ export default function Navbar() {
    * Handles logout and navigates to home page.
    */
   const handleLogout = () => {
-    logout();
-    navigate("/");
+    logout();            // Clear user from context and localStorage
+    navigate("/login");  // Redirect to login page after logout
   };
 
   return (

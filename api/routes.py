@@ -176,3 +176,24 @@ def view_workout_logs():
             for log in logs
         ]
     })
+
+
+@api_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
+    user = db_ops.get_user_by_email(email)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if not db_ops.verify_password(password, user.password):
+        return jsonify({"error": "Incorrect password"}), 401
+
+    return jsonify({
+        "message": "Login successful",
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email
+    })

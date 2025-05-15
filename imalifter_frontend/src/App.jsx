@@ -1,33 +1,61 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Home from "./pages/Home";
-import Register from "./pages/Register";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import RegisterForm from "./components/RegisterForm";
+import LoginForm from "./components/LoginForm";
+import FitnessPlanForm from "./components/FitnessPlanForm";
+import FoodLogForm from "./components/FoodLogForm";
+import WorkoutLogForm from "./components/WorkoutLogForm";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile"; // Import the Profile component
 
-import "./index.css";
+function PrivateRoute({ children }) {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" />;
+}
 
-export default function App() {
+function App() {
   return (
-    <Router>
-      <div className="container">
-        <nav style={{
-          backgroundColor: '#343a40',
-          padding: '0.75rem 1.5rem',
-          marginBottom: '2rem'
-        }}>
-          <Link to="/" style={{ color: '#fff', marginRight: '1rem', textDecoration: 'none' }}>Home</Link>
-          <Link to="/register" style={{ color: '#fff', marginRight: '1rem', textDecoration: 'none' }}>Register</Link>
-          <Link to="/dashboard" style={{ color: '#fff', marginRight: '1rem', textDecoration: 'none' }}>Dashboard</Link>
-          <Link to="/profile" style={{ color: '#fff', textDecoration: 'none' }}>Profile</Link> {/* Add Profile link */}
-        </nav>
-
+    <AuthProvider>
+      <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} /> {/* Add Profile route */}
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/plan"
+            element={
+              <PrivateRoute>
+                <FitnessPlanForm />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/log-food"
+            element={
+              <PrivateRoute>
+                <FoodLogForm />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/log-workout"
+            element={
+              <PrivateRoute>
+                <WorkoutLogForm />
+              </PrivateRoute>
+            }
+          />
         </Routes>
-      </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
+
+export default App;

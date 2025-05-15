@@ -235,3 +235,12 @@ def log_workout(email, workout):
     cursor.execute("INSERT INTO workouts (email, workout) VALUES (?, ?)", (email, workout))
     conn.commit()
     conn.close()
+
+
+    ### ------------------------ LOGIN ------------------------ ###
+
+from werkzeug.security import check_password_hash
+
+def verify_password(input_password, hashed_password):
+    return check_password_hash(hashed_password, input_password)
+

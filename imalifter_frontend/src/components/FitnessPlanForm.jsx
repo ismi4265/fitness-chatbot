@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { sendRequest } from "../api";
 
+import { useAuth } from "../context/AuthContext";
+
+
+
 export default function FitnessPlanForm() {
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
-    user_id: "", // This should match the user's registered ID
+    user_id: user?.user_id || "",  // <- comes from context
     goal: "",
     experience_level: "",
     dietary_preference: "",

@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { sendRequest } from "../api";
 
+import { useAuth } from "../context/AuthContext";
+
+
+
+
 export default function FoodLogForm() {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
-    user_id: "",
+    user_id: user?.user_id || "",  // <- comes from context
     food_name: "",
     calories: "",
     protein: "",
