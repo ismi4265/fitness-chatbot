@@ -3,13 +3,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.sql import func
 
 ### ------------------------ USER OPERATIONS ------------------------ ###
-def create_user(username, email, password):
-    """Creates a new user account."""
-    hashed_password = generate_password_hash(password)
-    user = User(username=username, email=email, password=hashed_password)
-    db.session.add(user)
-    db.session.commit()
-    return user
+import sqlite3
+
+def create_user(name, email, age):
+    conn = sqlite3.connect("database/db.sqlite3")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO users (name, email, age) VALUES (?, ?, ?)", (name, email, age))
+    conn.commit()
+    conn.close()
+
 
 def get_user_by_email(email):
     """Fetch a user by email."""
@@ -225,3 +227,11 @@ def adjust_fitness_plan_based_on_nutrition(user_id):
     }
 
     return adjustments
+
+
+def log_workout(email, workout):
+    conn = sqlite3.connect("database/db.sqlite3")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO workouts (email, workout) VALUES (?, ?)", (email, workout))
+    conn.commit()
+    conn.close()

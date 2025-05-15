@@ -105,3 +105,6 @@ class FoodLog(db.Model):
 
     # Fix: Changed backref to "manual_food_logs" to avoid name conflict
     user = db.relationship("User", backref=db.backref("manual_food_logs", lazy=True))
+
+
+    

@@ -1,99 +1,88 @@
 import { useState } from "react";
-import { generateFitnessPlan } from "../api";
-import styles from "../styles/Theme.module.css";
+import { sendRequest } from "../api";
 
-/**
- * FitnessPlanForm Component
- *
- * A reusable form that captures fitness plan preferences from the user,
- * sends the data to the backend to generate a personalized plan,
- * and passes the API response to the parent component via onResponse.
- *
- * @param {Function} onResponse - A callback function to handle the response from the API.
- *
- * State:
- * - form: stores input values for user_id, goal, experience_level, dietary_preference.
- * - loading: shows a loading state while the API request is in progress.
- */
-export default function FitnessPlanForm({ onResponse }) {
-  const [form, setForm] = useState({
-    user_id: 1,
-    goal: "muscle gain",
-    experience_level: "beginner",
-    dietary_preference: "vegan"
+export default function FitnessPlanForm() {
+  const [formData, setFormData] = useState({
+    user_id: "", // This should match the user's registered ID
+    goal: "",
+    experience_level: "",
+    dietary_preference: "",
   });
-
+  const [response, setResponse] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Handles change for input fields and updates the form state.
-   * @param {React.ChangeEvent<HTMLInputElement>} e
-   */
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  /**
-   * Submits the form data to the backend API.
-   * Displays a loading state and handles success or error via the parent callback.
-   * @param {React.FormEvent<HTMLFormElement>} e
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setResponse("");
+    setError("");
+
     try {
-      const res = await generateFitnessPlan(
-        form.user_id,
-        form.goal,
-        form.experience_level,
-        form.dietary_preference
-      );
-      onResponse(res);
-      // eslint-disable-next-line no-unused-vars
-    } catch (error) {
-      onResponse({ error: "Failed to generate fitness plan" });
-    } finally {
-      setLoading(false);
+      const res = await sendRequest("fitness_plan", "POST", formData);
+      setResponse(res.fitness_plan || "Plan generated!");
+    // eslint-disable-next-line no-unused-vars
+    } catch (err) {
+      setError("Failed to generate plan.");
     }
+
+    setLoading(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className={styles.formWrapper}>
-      <h2 className={styles.primaryText}>Generate Fitness Plan</h2>
+    <form onSubmit={handleSubmit} className="p-4 border rounded max-w-xl mx-auto">
+      <h2 className="text-xl font-bold mb-4">Generate Fitness Plan</h2>
 
       <input
+        type="text"
         name="user_id"
-        type="number"
-        value={form.user_id}
         placeholder="User ID"
+        value={formData.user_id}
         onChange={handleChange}
         required
-      />
-      <input
-        name="goal"
-        placeholder="Goal (e.g. muscle gain)"
-        value={form.goal}
-        onChange={handleChange}
-        required
-      />
-      <input
-        name="experience_level"
-        placeholder="Experience Level"
-        value={form.experience_level}
-        onChange={handleChange}
-        required
-      />
-      <input
-        name="dietary_preference"
-        placeholder="Dietary Preference"
-        value={form.dietary_preference}
-        onChange={handleChange}
-        required
+        className="w-full border p-2 mb-3"
       />
 
-      <button type="submit" className={styles.buttonPrimary} disabled={loading}>
-        {loading ? "Generating..." : "Generate"}
+      <input
+        type="text"
+        name="goal"
+        placeholder="e.g. muscle gain, weight loss"
+        value={formData.goal}
+        onChange={handleChange}
+        required
+        className="w-full border p-2 mb-3"
+      />
+
+      <input
+        type="text"
+        name="experience_level"
+        placeholder="e.g. beginner, intermediate"
+        value={formData.experience_level}
+        onChange={handleChange}
+        required
+        className="w-full border p-2 mb-3"
+      />
+
+      <input
+        type="text"
+        name="dietary_preference"
+        placeholder="e.g. vegan, keto, none"
+        value={formData.dietary_preference}
+        onChange={handleChange}
+        required
+        className="w-full border p-2 mb-3"
+      />
+
+      <button type="submit" className="bg-purple-600 text-white px-4 py-2">
+        {loading ? "Generating..." : "Generate Plan"}
       </button>
+
+      {response && <div className="mt-4 p-3 bg-green-100 rounded">{response}</div>}
+      {error && <div className="mt-4 p-3 bg-red-100 rounded text-red-800">{error}</div>}
     </form>
   );
 }

@@ -1,85 +1,83 @@
-// src/pages/Dashboard.jsx
-import { useState } from "react";
-import { generateFitnessPlan, logFood, getMealPlan } from "../api";
-import styles from "../styles/Theme.module.css";
+import { useEffect, useState } from "react";
+import { sendRequest } from "../api";
 
 export default function Dashboard() {
-  // Hardcoded user ID for demonstration
-  const [userId] = useState(1);
-
-  // State variables to handle API response and feedback
-  const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [fitnessPlan, setFitnessPlan] = useState("");
+  const [workouts, setWorkouts] = useState([]);
+  const [foodLog, setFoodLog] = useState([]);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
-  /**
-   * Wrapper to handle any API call with loading, success, and error state
-   * @param {Function} apiFunc - async function to call
-   * @param {String} label - description of the action for messages
-   */
-  const handleApiCall = async (apiFunc, label) => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    setResponse("");
+  useEffect(() => {
+    if (!userId) return;
 
-    try {
-      const res = await apiFunc();
-      setSuccess(`${label} completed successfully!`);
-      setResponse(JSON.stringify(res, null, 2));
-    } catch (err) {
-      setError(`Error during ${label.toLowerCase()}: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchData = async () => {
+      setError("");
+      try {
+        const planRes = await sendRequest(`get_meal_plan/${userId}`);
+        setFitnessPlan(planRes.meal_plan || "No plan found.");
+
+        const workoutRes = await sendRequest("workout-log-view", "POST", { user_id: userId });
+        setWorkouts(workoutRes.workouts || []);
+
+        const foodRes = await sendRequest(`get_food_log/${userId}`);
+        setFoodLog(foodRes.food_log || []);
+      // eslint-disable-next-line no-unused-vars
+      } catch (err) {
+        setError("Failed to load dashboard data.");
+      }
+    };
+
+    fetchData();
+  }, [userId]);
+
+  const handleChange = (e) => setUserId(e.target.value);
 
   return (
-    <div className={styles.pageWrapper}>
-      <h2 className={styles.primaryText}>Dashboard</h2>
+    <div className="p-4 max-w-3xl mx-auto">
+      <label className="block font-bold mb-2">Enter Your User ID:</label>
+      <input
+        type="text"
+        className="border p-2 w-full mb-6"
+        value={userId}
+        onChange={handleChange}
+        required
+      />
 
-      {/* Buttons to trigger API calls */}
-      <div className={styles.buttonGroup}>
-        <button
-          onClick={() =>
-            handleApiCall(
-              () => generateFitnessPlan(userId, "muscle gain", "beginner", "vegan"),
-              "Fitness Plan"
-            )
-          }
-          className={styles.buttonPrimary}
-        >
-          Generate Fitness Plan
-        </button>
+      {error && <p className="text-red-600">{error}</p>}
 
-        <button
-          onClick={() =>
-            handleApiCall(
-              () => logFood(userId, "Oatmeal", 150, 5, 27, 3),
-              "Log Food"
-            )
-          }
-          className={styles.buttonPrimary}
-        >
-          Log Food
-        </button>
-
-        <button
-          onClick={() => handleApiCall(() => getMealPlan(userId), "Meal Plan")}
-          className={styles.buttonPrimary}
-        >
-          Get Meal Plan
-        </button>
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">Fitness Plan</h2>
+        <div className="bg-gray-100 p-3 rounded whitespace-pre-line">{fitnessPlan}</div>
       </div>
 
-      {/* Feedback messages */}
-      {loading && <p className={styles.loading}>Loading...</p>}
-      {error && <p className={styles.error}>{error}</p>}
-      {success && <p className={styles.success}>{success}</p>}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">Workout Log</h2>
+        {workouts.length === 0 ? (
+          <p>No workouts found.</p>
+        ) : (
+          <ul className="list-disc list-inside">
+            {workouts.map((w, i) => (
+              <li key={i}>{w.workout_name} ({w.created_at})</li>
+            ))}
+          </ul>
+        )}
+      </div>
 
-      {/* API response display */}
-      <pre className={styles.responseOutput}>{response}</pre>
+      <div>
+        <h2 className="text-xl font-bold mb-2">Food Log</h2>
+        {foodLog.length === 0 ? (
+          <p>No food entries found.</p>
+        ) : (
+          <ul className="list-disc list-inside">
+            {foodLog.map((f, i) => (
+              <li key={i}>
+                {f.food_name}: {f.calories} cal, {f.protein}g P, {f.carbs}g C, {f.fats}g F ({f.created_at})
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,110 +1,51 @@
 import { useState } from "react";
-import styles from "../styles/Theme.module.css";
+import { sendRequest } from "../api";
 
-/**
- * WorkoutLogForm Component
- *
- * This component provides a form to log a user's workout details including
- * exercise name, duration, and intensity. It communicates with the backend API
- * to store the workout and provides feedback for loading, success, and error states.
- *
- * @component
- * @returns {JSX.Element} The rendered WorkoutLogForm component.
- */
 export default function WorkoutLogForm() {
-  // State for the workout form input fields
-  const [workout, setWorkout] = useState({
-    exercise: "",
-    duration: "",
-    intensity: "",
+  const [formData, setFormData] = useState({
+    email: "",
+    workout: "",
   });
+  const [message, setMessage] = useState("");
 
-  // State for tracking form submission/loading status
-  const [loading, setLoading] = useState(false);
-
-  // State for showing success or error messages
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
-
-  /**
-   * Handles input field changes and updates the workout state.
-   *
-   * @param {React.ChangeEvent<HTMLInputElement | HTMLSelectElement>} e - Input change event
-   */
   const handleChange = (e) => {
-    setWorkout({ ...workout, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  /**
-   * Submits the workout form by sending a POST request to the backend.
-   * Handles success and error feedback.
-   *
-   * @param {React.FormEvent<HTMLFormElement>} e - Form submission event
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setSuccess("");
-    setError("");
-
     try {
-      const response = await fetch("http://127.0.0.1:5000/log_workout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(workout),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to log workout");
-      }
-
-      setSuccess("Workout logged successfully!");
-      setWorkout({ exercise: "", duration: "", intensity: "" });
+      const res = await sendRequest("workout-log", "POST", formData);
+      setMessage(res.message || "Workout logged!");
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.error(err);
+      setMessage("Failed to log workout.");
     }
   };
 
   return (
-    <div className={styles.pageWrapper}>
-      <h2 className={styles.primaryText}>Log Your Workout</h2>
-      <form onSubmit={handleSubmit} className={styles.formWrapper}>
-        <input
-          name="exercise"
-          placeholder="Exercise Name"
-          value={workout.exercise}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="duration"
-          type="number"
-          placeholder="Duration (minutes)"
-          value={workout.duration}
-          onChange={handleChange}
-          required
-        />
-        <select
-          name="intensity"
-          value={workout.intensity}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Intensity</option>
-          <option value="low">Low</option>
-          <option value="moderate">Moderate</option>
-          <option value="high">High</option>
-        </select>
-        <button type="submit" className={styles.buttonPrimary}>
-          {loading ? "Logging..." : "Log Workout"}
-        </button>
-      </form>
-      {success && <p className={styles.success}>{success}</p>}
-      {error && <p className={styles.error}>{error}</p>}
-    </div>
+    <form onSubmit={handleSubmit} className="p-4 border rounded max-w-md mx-auto">
+      <h2 className="text-xl font-bold mb-4">Log Workout</h2>
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={handleChange}
+        required
+        className="w-full border p-2 mb-3"
+      />
+      <textarea
+        name="workout"
+        placeholder="Describe your workout..."
+        value={formData.workout}
+        onChange={handleChange}
+        required
+        className="w-full border p-2 mb-3"
+        rows="4"
+      />
+      <button type="submit" className="bg-green-600 text-white px-4 py-2">Submit</button>
+      {message && <p className="mt-3 text-center">{message}</p>}
+    </form>
   );
 }
