@@ -6,6 +6,8 @@ import database.db_operations as db_ops
 from chatgpt_wrapper import ChatGPT
 from user_input_handler import generate_fitness_prompt
 from utils.meal_planner import generate_meal_plan
+from database.models import db, User
+
 
 api_bp = Blueprint("api", __name__)
 chatbot = ChatGPT()
@@ -196,4 +198,32 @@ def login():
         "user_id": user.id,
         "username": user.username,
         "email": user.email
+    })
+
+
+@api_bp.route('/update-profile', methods=['POST'])
+def update_profile():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    name = data.get("name")
+    email = data.get("email")
+    age = data.get("age")
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    user.username = name
+    user.email = email
+    user.age = age
+    db.session.commit()
+
+    return jsonify({
+        "message": "Profile updated successfully.",
+        "updated_user": {
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "age": user.age
+        }
     })

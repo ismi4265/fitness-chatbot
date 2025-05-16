@@ -86,6 +86,16 @@ export default function Navbar() {
             Profile
           </NavLink>
 
+          <NavLink
+            to="/profile"
+            className={({ isActive }) =>
+              isActive ? styles.activeLink : styles.link
+            }
+          >
+            Profile
+          </NavLink>
+
+
           {/* Logout is a button styled like a link */}
           <button onClick={handleLogout} className={styles.logoutButton}>
             Logout

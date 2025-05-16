@@ -6,6 +6,8 @@ import FitnessPlanForm from "./components/FitnessPlanForm";
 import FoodLogForm from "./components/FoodLogForm";
 import WorkoutLogForm from "./components/WorkoutLogForm";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -49,6 +51,14 @@ function App() {
             element={
               <PrivateRoute>
                 <WorkoutLogForm />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
               </PrivateRoute>
             }
           />
